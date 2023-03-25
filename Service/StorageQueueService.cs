@@ -16,6 +16,59 @@ namespace MessagingWithStorageQueue.Service
         }
 
         /// <summary>
+        /// Inspencionar as mensagens da fila sem as remover
+        /// </summary>
+        /// <param name="queueName">Nome da fila</param>
+        /// <returns>Uma lista de menssagens</returns>
+        public async Task<object?> PeekNextMessageAsync(string queueName)
+        {
+            QueueClient queueClient = new QueueClient(_queueOptions.ConnectionString, queueName);
+
+            if (queueClient.Exists())
+            {
+                // Inspenciona as mensagens 
+                PeekedMessage[] peekedMessages = await queueClient.PeekMessagesAsync();
+
+                var product = peekedMessages.FirstOrDefault()?.MessageText;
+
+                var response = product != null ? JsonSerializer.Deserialize<ProductModel>(product) : null;
+
+                return response;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Recebe as mensagens
+        /// </summary>
+        /// <param name="queueName">Nome da fila</param>
+        /// <returns>A próxima mensagem</returns>
+        public async Task<object?> ReadMessageAsync(string queueName)
+        {
+            QueueClient queueClient = new QueueClient(_queueOptions.ConnectionString, queueName);
+
+            if (queueClient.Exists())
+            {
+                // Recebe as mensagens 
+                QueueMessage[] message = await queueClient.ReceiveMessagesAsync();
+
+                var product = message.FirstOrDefault()?.MessageText;
+
+                ProductModel? response = null;
+                if (product != null)
+                {
+                    response = JsonSerializer.Deserialize<ProductModel>(product);
+                    await queueClient.DeleteMessageAsync(message[0].MessageId, message[0].PopReceipt);
+                }
+
+                return response;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Adiciona mensagens na fila
         /// </summary>
         /// <param name="product">Objeto a ser inserido na fila</param>
@@ -61,53 +114,20 @@ namespace MessagingWithStorageQueue.Service
         }
 
         /// <summary>
-        /// Inspencionar as mensagens da fila sem as remover
+        /// Deletar uma queue
         /// </summary>
-        /// <param name="queueName">Nome da fila</param>
-        /// <returns>Uma lista de menssagens</returns>
-        public async Task<object?> PeekNextMessageAsync(string queueName)
+        /// <param name="queueName">Nome da queue</param>
+        /// <returns></returns>
+        public async Task<object?> DeleteQueueAsync(string queueName)
         {
             QueueClient queueClient = new QueueClient(_queueOptions.ConnectionString, queueName);
 
             if (queueClient.Exists())
             {
-                // Inspenciona as mensagens 
-                PeekedMessage[] peekedMessages = await queueClient.PeekMessagesAsync();
+                // Deleta uma fila
+                var response = await queueClient.DeleteAsync();
 
-                var product = peekedMessages.FirstOrDefault()?.MessageText;
-
-                var response = product != null ? JsonSerializer.Deserialize<ProductModel>(product) : null;
-
-                return response;
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Recebe as mensagens
-        /// </summary>
-        /// <param name="queueName">Nome da fila</param>
-        /// <returns>A próxima mensagem</returns>
-        public async Task<object?> ReadMessageAsync(string queueName)
-        {
-            QueueClient queueClient = new QueueClient(_queueOptions.ConnectionString, queueName);
-
-            if (queueClient.Exists())
-            {
-                // Recebe as mensagens 
-                QueueMessage[] message = await queueClient.ReceiveMessagesAsync();
-
-                var product = message.FirstOrDefault()?.MessageText;
-
-                ProductModel? response = null;  
-                if(product != null)
-                {
-                    response = JsonSerializer.Deserialize<ProductModel>(product);
-                    await queueClient.DeleteMessageAsync(message[0].MessageId, message[0].PopReceipt);
-                }
-
-                return response;
+                return response.Status;
             }
 
             return null;

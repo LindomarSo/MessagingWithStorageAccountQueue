@@ -8,5 +8,6 @@ namespace MessagingWithStorageQueue.Service
         Task<object?> AddMessageAsync(ProductModel product, string queueName);
         Task<object?> PeekNextMessageAsync(string queueName);
         Task<object?> ReadMessageAsync(string queueName);
+        Task<object?> DeleteQueueAsync(string queueName);
     }
 }

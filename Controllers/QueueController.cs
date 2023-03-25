@@ -69,14 +69,30 @@ public class QueueController : ControllerBase
     /// <param name="message"></param>
     /// <returns>Id da mensagem</returns>
     [HttpPost("send")]
-    public async Task<ActionResult<string>> Send([FromBody] ProductModel message)
+    public async Task<ActionResult<string>> Send([FromBody] QueueModel message)
     {
-        var response = await _queueService.AddMessageAsync(message, "lindomar");
+        var response = await _queueService.AddMessageAsync(message.Message, message.Name);
 
         if(response is null)
             return BadRequest($"Erro ao criar Queue {message.Name}");
 
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Deleta uma fila
+    /// </summary>
+    /// <param name="queueName">Nome da fila</param>
+    /// <returns>Id da mensagem</returns>
+    [HttpDelete("delete/{queueName}")]
+    public async Task<ActionResult<string>> Delete(string queueName)
+    {
+        var response = await _queueService.DeleteQueueAsync(queueName);
+
+        if(response is null)
+            return BadRequest($"Erro ao criar Queue {queueName}");
+
+        return NoContent();
     }
 }
     

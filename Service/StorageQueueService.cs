@@ -2,6 +2,7 @@
 using Azure.Storage.Queues.Models;
 using MessagingWithStorageQueue.Model;
 using Microsoft.Extensions.Options;
+using System.Text;
 using System.Text.Json;
 
 namespace MessagingWithStorageQueue.Service
@@ -85,7 +86,9 @@ namespace MessagingWithStorageQueue.Service
             if (queueClient.Exists())
             {
                 var message = JsonSerializer.Serialize(product);
-                var response = await queueClient.SendMessageAsync(message);
+                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+                string base64String = Convert.ToBase64String(messageBytes);
+                var response = await queueClient.SendMessageAsync(base64String);
 
                 return new { messageId = response.Value.MessageId };
             }
